@@ -1,0 +1,42 @@
+### Event-driven order/inventory demo — fire these against a running order-service.
+### Works with the VS Code "REST Client" extension or IntelliJ's HTTP client.
+
+@order = http://localhost:8081
+
+### 1. Happy path — WIDGET has plenty of stock → ends CONFIRMED
+# @name placeWidget
+POST {{order}}/api/orders
+Content-Type: application/json
+
+{ "productCode": "WIDGET", "quantity": 2 }
+
+### Read it back (paste the id from the response above, or use the captured one)
+GET {{order}}/api/orders/{{placeWidget.response.body.id}}
+
+### 2. Business rejection — only 5 GADGETs exist → REJECTED (insufficient stock)
+POST {{order}}/api/orders
+Content-Type: application/json
+
+{ "productCode": "GADGET", "quantity": 999 }
+
+### 3. Business rejection — unknown product → REJECTED
+POST {{order}}/api/orders
+Content-Type: application/json
+
+{ "productCode": "NOPE", "quantity": 1 }
+
+### 4. Poison pill — BOOM throws a transient error → retries → dead-letter topic
+###    (the order stays PENDING; watch the inventory-service log + Kafka-UI)
+POST {{order}}/api/orders
+Content-Type: application/json
+
+{ "productCode": "BOOM", "quantity": 1 }
+
+### 5. Validation — quantity must be >= 1 → 400 Bad Request
+POST {{order}}/api/orders
+Content-Type: application/json
+
+{ "productCode": "WIDGET", "quantity": 0 }
+
+### Actuator
+GET {{order}}/actuator/health

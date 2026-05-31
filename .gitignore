@@ -1,0 +1,15 @@
+# Build output
+target/
+build/
+
+# Local secrets / env (each service also has its own .gitignore)
+.env
+*.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
